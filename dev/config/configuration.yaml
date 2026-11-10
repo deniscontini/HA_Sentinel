@@ -1,0 +1,17 @@
+# Development configuration (only this file is versioned in dev/config).
+default_config:
+
+homeassistant:
+  name: HA Sentinel Dev
+  # Lets HA Sentinel read the sample logs written by scripts/simulate_attacks.py
+  allowlist_external_dirs:
+    - /var/log/sentinel
+
+http:
+  ip_ban_enabled: true
+  login_attempts_threshold: 10
+
+logger:
+  default: info
+  logs:
+    custom_components.ha_sentinel: debug

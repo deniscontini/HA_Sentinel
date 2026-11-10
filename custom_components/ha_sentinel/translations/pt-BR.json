@@ -1,0 +1,239 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "HA Sentinel",
+        "description": "Monitore tentativas de ataque contra o seu Home Assistant e a sua rede. Fontes adicionais (arquivos de log, syslog) podem ser configuradas depois nas opções da integração.",
+        "data": {
+          "monitor_ha_auth": "Monitorar falhas de login do Home Assistant",
+          "retention_days": "Retenção"
+        },
+        "data_description": {
+          "monitor_ha_auth": "Logins inválidos, tokens inválidos e banimentos de IP reportados pelo próprio Home Assistant.",
+          "retention_days": "Eventos mais antigos que isso são apagados automaticamente."
+        }
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "O HA Sentinel já está configurado."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Opções do HA Sentinel",
+        "sections": {
+          "sources": {
+            "name": "Fontes",
+            "data": {
+              "monitor_ha_auth": "Monitorar falhas de login do Home Assistant",
+              "log_paths": "Arquivos de log",
+              "poll_interval": "Intervalo de leitura"
+            },
+            "data_description": {
+              "log_paths": "Um caminho absoluto por linha (auth.log do sshd, access.log do nginx/Apache, UFW/iptables, fail2ban). O formato é detectado automaticamente. Caminhos fora de /config precisam estar em homeassistant: allowlist_external_dirs."
+            }
+          },
+          "syslog": {
+            "name": "Receptor syslog (UDP)",
+            "data": {
+              "syslog_enabled": "Ativar receptor syslog",
+              "syslog_host": "Endereço de escuta",
+              "syslog_port": "Porta UDP",
+              "syslog_allowed_senders": "Remetentes permitidos"
+            },
+            "data_description": {
+              "syslog_enabled": "Permite que roteadores, firewalls, NAS e servidores encaminhem seus logs ao Home Assistant.",
+              "syslog_allowed_senders": "IPs ou CIDRs, um por linha. Vazio aceita qualquer remetente (não recomendado)."
+            }
+          },
+          "detection": {
+            "name": "Detecção",
+            "data": {
+              "brute_force_threshold": "Força bruta: falhas de login",
+              "brute_force_window": "Força bruta: janela",
+              "port_scan_threshold": "Varredura: portas distintas",
+              "port_scan_window": "Varredura: janela",
+              "under_attack_threshold": "'Sob ataque' após N eventos em 5 min",
+              "ignored_networks": "IPs/redes ignorados"
+            },
+            "data_description": {
+              "ignored_networks": "IPs ou CIDRs, um por linha, que nunca são registrados (ex.: seu servidor de monitoramento)."
+            }
+          },
+          "general": {
+            "name": "Geral",
+            "data": {
+              "retention_days": "Retenção",
+              "bus_event_min_severity": "Severidade mínima para eventos de automação"
+            },
+            "data_description": {
+              "bus_event_min_severity": "Eventos com esta severidade ou maior disparam ha_sentinel_attack_detected no barramento (use em automações/notificações)."
+            }
+          }
+        }
+      }
+    },
+    "error": {
+      "path_not_absolute": "Os caminhos de log devem ser absolutos.",
+      "path_not_allowed": "Caminho não permitido. Adicione o diretório em homeassistant: allowlist_external_dirs.",
+      "path_not_readable": "Arquivo inexistente ou sem permissão de leitura para o Home Assistant.",
+      "invalid_network": "Endereço IP ou CIDR inválido."
+    }
+  },
+  "selector": {
+    "severity": {
+      "options": {
+        "low": "Baixa",
+        "medium": "Média",
+        "high": "Alta",
+        "critical": "Crítica"
+      }
+    },
+    "attack_type": {
+      "options": {
+        "failed_login": "Falha de login",
+        "brute_force": "Força bruta",
+        "banned_ip": "IP banido",
+        "sql_injection": "Injeção SQL",
+        "xss": "Cross-site scripting (XSS)",
+        "path_traversal": "Path traversal",
+        "command_injection": "Injeção de comando",
+        "log4shell": "Log4Shell",
+        "shellshock": "Shellshock",
+        "sensitive_file_probe": "Sondagem de arquivo sensível",
+        "scanner": "Scanner de vulnerabilidades",
+        "port_scan": "Varredura de portas",
+        "firewall_block": "Bloqueio de firewall",
+        "suspicious_request": "Requisição suspeita",
+        "other": "Outro"
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "under_attack": {
+        "name": "Sob ataque"
+      }
+    },
+    "sensor": {
+      "attacks_last_hour": {
+        "name": "Ataques (última hora)"
+      },
+      "attacks_last_24h": {
+        "name": "Ataques (24 h)"
+      },
+      "unique_attackers_24h": {
+        "name": "Atacantes únicos (24 h)"
+      },
+      "high_severity_24h": {
+        "name": "Ataques altos/críticos (24 h)"
+      },
+      "threat_level": {
+        "name": "Nível de ameaça",
+        "state": {
+          "none": "Nenhuma",
+          "low": "Baixa",
+          "medium": "Média",
+          "high": "Alta",
+          "critical": "Crítica"
+        }
+      },
+      "last_attack": {
+        "name": "Último ataque",
+        "state": {
+          "failed_login": "Falha de login",
+          "brute_force": "Força bruta",
+          "banned_ip": "IP banido",
+          "sql_injection": "Injeção SQL",
+          "xss": "Cross-site scripting (XSS)",
+          "path_traversal": "Path traversal",
+          "command_injection": "Injeção de comando",
+          "log4shell": "Log4Shell",
+          "shellshock": "Shellshock",
+          "sensitive_file_probe": "Sondagem de arquivo sensível",
+          "scanner": "Scanner de vulnerabilidades",
+          "port_scan": "Varredura de portas",
+          "firewall_block": "Bloqueio de firewall",
+          "suspicious_request": "Requisição suspeita",
+          "other": "Outro"
+        }
+      },
+      "last_attack_time": {
+        "name": "Horário do último ataque"
+      },
+      "stored_events": {
+        "name": "Eventos armazenados"
+      }
+    }
+  },
+  "exceptions": {
+    "not_loaded": {
+      "message": "O HA Sentinel não está carregado."
+    }
+  },
+  "services": {
+    "report_event": {
+      "name": "Registrar ataque",
+      "description": "Registra um ataque detectado por outra integração ou automação (ex.: roteador, IDS, câmera).",
+      "fields": {
+        "attack_type": {
+          "name": "Tipo",
+          "description": "Categoria do ataque."
+        },
+        "ip": {
+          "name": "IP",
+          "description": "Endereço IP de origem."
+        },
+        "severity": {
+          "name": "Severidade",
+          "description": "Padrão: severidade usual do tipo."
+        },
+        "source": {
+          "name": "Origem",
+          "description": "Nome do sistema que detectou."
+        },
+        "port": {
+          "name": "Porta",
+          "description": "Porta alvo."
+        },
+        "username": {
+          "name": "Usuário",
+          "description": "Usuário tentado, se houver."
+        },
+        "target": {
+          "name": "Alvo",
+          "description": "URL, serviço ou dispositivo alvo."
+        },
+        "details": {
+          "name": "Detalhes",
+          "description": "Texto livre."
+        }
+      }
+    },
+    "purge_events": {
+      "name": "Apagar eventos",
+      "description": "Apaga eventos armazenados.",
+      "fields": {
+        "older_than_days": {
+          "name": "Mais antigos que (dias)",
+          "description": "0 apaga tudo."
+        }
+      }
+    },
+    "generate_test_events": {
+      "name": "Gerar eventos de teste",
+      "description": "Insere eventos sintéticos (faixas de IP de documentação) para testar o dashboard. Remova depois com purge_events.",
+      "fields": {
+        "count": {
+          "name": "Quantidade",
+          "description": "Número de eventos."
+        },
+        "hours": {
+          "name": "Distribuir em (horas)",
+          "description": "Eventos distribuídos nas últimas N horas."
+        }
+      }
+    }
+  }
+}

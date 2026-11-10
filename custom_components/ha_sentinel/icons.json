@@ -1,0 +1,31 @@
+{
+  "entity": {
+    "binary_sensor": {
+      "under_attack": { "default": "mdi:shield-check", "state": { "on": "mdi:shield-alert" } }
+    },
+    "sensor": {
+      "attacks_last_hour": { "default": "mdi:shield-alert-outline" },
+      "attacks_last_24h": { "default": "mdi:shield-alert-outline" },
+      "unique_attackers_24h": { "default": "mdi:ip-network" },
+      "high_severity_24h": { "default": "mdi:alert-octagon" },
+      "threat_level": {
+        "default": "mdi:shield-half-full",
+        "state": {
+          "none": "mdi:shield-check",
+          "low": "mdi:shield-outline",
+          "medium": "mdi:shield-half-full",
+          "high": "mdi:shield-alert",
+          "critical": "mdi:shield-off"
+        }
+      },
+      "last_attack": { "default": "mdi:target-account" },
+      "last_attack_time": { "default": "mdi:clock-alert-outline" },
+      "stored_events": { "default": "mdi:database" }
+    }
+  },
+  "services": {
+    "report_event": { "service": "mdi:shield-plus" },
+    "purge_events": { "service": "mdi:delete-sweep" },
+    "generate_test_events": { "service": "mdi:test-tube" }
+  }
+}

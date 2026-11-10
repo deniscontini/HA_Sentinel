@@ -1,0 +1,74 @@
+blueprint:
+  name: HA Sentinel — notificar ataque
+  description: >
+    Envia uma notificação quando o HA Sentinel detecta um ataque com a
+    severidade mínima configurada nas opções da integração
+    (evento ha_sentinel_attack_detected).
+  domain: automation
+  input:
+    notify_action:
+      name: Ação de notificação
+      description: "Ex.: notify.mobile_app_meu_celular"
+      selector:
+        text:
+    attack_types:
+      name: Tipos de ataque
+      description: Deixe vazio para notificar todos os tipos.
+      default: []
+      selector:
+        select:
+          multiple: true
+          options:
+            - brute_force
+            - banned_ip
+            - sql_injection
+            - xss
+            - path_traversal
+            - command_injection
+            - log4shell
+            - shellshock
+            - port_scan
+            - scanner
+            - sensitive_file_probe
+            - failed_login
+            - firewall_block
+            - suspicious_request
+            - other
+    cooldown:
+      name: Intervalo mínimo entre notificações
+      default: 300
+      selector:
+        number:
+          min: 0
+          max: 86400
+          unit_of_measurement: s
+
+mode: single
+max_exceeded: silent
+
+triggers:
+  - trigger: event
+    event_type: ha_sentinel_attack_detected
+
+variables:
+  wanted: !input attack_types
+  notify_action: !input notify_action
+
+conditions:
+  - condition: template
+    value_template: "{{ wanted | length == 0 or trigger.event.data.attack_type in wanted }}"
+
+actions:
+  - action: "{{ notify_action }}"
+    data:
+      title: "🛡️ HA Sentinel: {{ trigger.event.data.attack_type | replace('_', ' ') }}"
+      message: >
+        Severidade {{ trigger.event.data.severity }} de
+        {{ trigger.event.data.ip or 'origem desconhecida' }}
+        ({{ trigger.event.data.source }}).
+        {{ trigger.event.data.details or '' }}
+      data:
+        url: /ha-sentinel
+        clickAction: /ha-sentinel
+  - delay:
+      seconds: !input cooldown

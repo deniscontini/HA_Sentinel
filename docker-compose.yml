@@ -1,0 +1,17 @@
+# Local development instance of Home Assistant with HA Sentinel mounted.
+#   docker compose up -d   ->  http://localhost:8123
+#   python3 scripts/simulate_attacks.py   (generates traffic for the dashboard)
+services:
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:stable
+    container_name: ha-sentinel-dev
+    restart: unless-stopped
+    environment:
+      TZ: America/Sao_Paulo
+    volumes:
+      - ./dev/config:/config
+      - ./custom_components:/config/custom_components:ro
+      - ./dev/logs:/var/log/sentinel:ro
+    ports:
+      - "8123:8123"
+      - "5514:5514/udp"

@@ -1,0 +1,88 @@
+report_event:
+  fields:
+    attack_type:
+      required: true
+      example: brute_force
+      selector:
+        select:
+          translation_key: attack_type
+          options:
+            - failed_login
+            - brute_force
+            - banned_ip
+            - sql_injection
+            - xss
+            - path_traversal
+            - command_injection
+            - log4shell
+            - shellshock
+            - sensitive_file_probe
+            - scanner
+            - port_scan
+            - firewall_block
+            - suspicious_request
+            - other
+    ip:
+      example: 203.0.113.10
+      selector:
+        text:
+    severity:
+      selector:
+        select:
+          translation_key: severity
+          options:
+            - low
+            - medium
+            - high
+            - critical
+    source:
+      default: service
+      example: unifi
+      selector:
+        text:
+    port:
+      selector:
+        number:
+          min: 0
+          max: 65535
+          mode: box
+    username:
+      selector:
+        text:
+    target:
+      selector:
+        text:
+    details:
+      selector:
+        text:
+          multiline: true
+
+purge_events:
+  fields:
+    older_than_days:
+      required: true
+      default: 30
+      selector:
+        number:
+          min: 0
+          max: 3650
+          mode: box
+          unit_of_measurement: d
+
+generate_test_events:
+  fields:
+    count:
+      default: 100
+      selector:
+        number:
+          min: 1
+          max: 5000
+          mode: box
+    hours:
+      default: 24
+      selector:
+        number:
+          min: 1
+          max: 2160
+          mode: box
+          unit_of_measurement: h

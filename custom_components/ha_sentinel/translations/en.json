@@ -1,0 +1,239 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "HA Sentinel",
+        "description": "Monitor attack attempts against your Home Assistant and network. Additional sources (log files, syslog) can be configured afterwards in the integration options.",
+        "data": {
+          "monitor_ha_auth": "Monitor Home Assistant failed logins",
+          "retention_days": "Retention"
+        },
+        "data_description": {
+          "monitor_ha_auth": "Failed logins, invalid tokens and IP bans reported by Home Assistant itself.",
+          "retention_days": "Events older than this are deleted automatically."
+        }
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "HA Sentinel is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "HA Sentinel options",
+        "sections": {
+          "sources": {
+            "name": "Sources",
+            "data": {
+              "monitor_ha_auth": "Monitor Home Assistant failed logins",
+              "log_paths": "Log files",
+              "poll_interval": "Polling interval"
+            },
+            "data_description": {
+              "log_paths": "One absolute path per line (sshd auth.log, nginx/Apache access.log, UFW/iptables, fail2ban). The format is detected automatically. Paths outside /config must be listed in homeassistant: allowlist_external_dirs."
+            }
+          },
+          "syslog": {
+            "name": "Syslog receiver (UDP)",
+            "data": {
+              "syslog_enabled": "Enable syslog receiver",
+              "syslog_host": "Listen address",
+              "syslog_port": "UDP port",
+              "syslog_allowed_senders": "Allowed senders"
+            },
+            "data_description": {
+              "syslog_enabled": "Lets routers, firewalls, NAS and servers forward their logs to Home Assistant.",
+              "syslog_allowed_senders": "IPs or CIDRs, one per line. Empty accepts any sender (not recommended)."
+            }
+          },
+          "detection": {
+            "name": "Detection",
+            "data": {
+              "brute_force_threshold": "Brute force: failed logins",
+              "brute_force_window": "Brute force: window",
+              "port_scan_threshold": "Port scan: distinct ports",
+              "port_scan_window": "Port scan: window",
+              "under_attack_threshold": "'Under attack' after N events in 5 min",
+              "ignored_networks": "Ignored IPs/networks"
+            },
+            "data_description": {
+              "ignored_networks": "IPs or CIDRs, one per line, never recorded (e.g. your monitoring host)."
+            }
+          },
+          "general": {
+            "name": "General",
+            "data": {
+              "retention_days": "Retention",
+              "bus_event_min_severity": "Minimum severity for automation events"
+            },
+            "data_description": {
+              "bus_event_min_severity": "Events at or above this severity fire ha_sentinel_attack_detected on the event bus (use it in automations/notifications)."
+            }
+          }
+        }
+      }
+    },
+    "error": {
+      "path_not_absolute": "Log paths must be absolute.",
+      "path_not_allowed": "Path not allowed. Add its directory to homeassistant: allowlist_external_dirs.",
+      "path_not_readable": "File does not exist or is not readable by Home Assistant.",
+      "invalid_network": "Invalid IP address or CIDR."
+    }
+  },
+  "selector": {
+    "severity": {
+      "options": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High",
+        "critical": "Critical"
+      }
+    },
+    "attack_type": {
+      "options": {
+        "failed_login": "Failed login",
+        "brute_force": "Brute force",
+        "banned_ip": "Banned IP",
+        "sql_injection": "SQL injection",
+        "xss": "Cross-site scripting (XSS)",
+        "path_traversal": "Path traversal",
+        "command_injection": "Command injection",
+        "log4shell": "Log4Shell",
+        "shellshock": "Shellshock",
+        "sensitive_file_probe": "Sensitive file probe",
+        "scanner": "Vulnerability scanner",
+        "port_scan": "Port scan",
+        "firewall_block": "Firewall block",
+        "suspicious_request": "Suspicious request",
+        "other": "Other"
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "under_attack": {
+        "name": "Under attack"
+      }
+    },
+    "sensor": {
+      "attacks_last_hour": {
+        "name": "Attacks (last hour)"
+      },
+      "attacks_last_24h": {
+        "name": "Attacks (24 h)"
+      },
+      "unique_attackers_24h": {
+        "name": "Unique attackers (24 h)"
+      },
+      "high_severity_24h": {
+        "name": "High/critical attacks (24 h)"
+      },
+      "threat_level": {
+        "name": "Threat level",
+        "state": {
+          "none": "None",
+          "low": "Low",
+          "medium": "Medium",
+          "high": "High",
+          "critical": "Critical"
+        }
+      },
+      "last_attack": {
+        "name": "Last attack",
+        "state": {
+          "failed_login": "Failed login",
+          "brute_force": "Brute force",
+          "banned_ip": "Banned IP",
+          "sql_injection": "SQL injection",
+          "xss": "Cross-site scripting (XSS)",
+          "path_traversal": "Path traversal",
+          "command_injection": "Command injection",
+          "log4shell": "Log4Shell",
+          "shellshock": "Shellshock",
+          "sensitive_file_probe": "Sensitive file probe",
+          "scanner": "Vulnerability scanner",
+          "port_scan": "Port scan",
+          "firewall_block": "Firewall block",
+          "suspicious_request": "Suspicious request",
+          "other": "Other"
+        }
+      },
+      "last_attack_time": {
+        "name": "Last attack time"
+      },
+      "stored_events": {
+        "name": "Stored events"
+      }
+    }
+  },
+  "exceptions": {
+    "not_loaded": {
+      "message": "HA Sentinel is not loaded."
+    }
+  },
+  "services": {
+    "report_event": {
+      "name": "Report attack",
+      "description": "Records an attack detected by another integration or automation (e.g. router, IDS, camera).",
+      "fields": {
+        "attack_type": {
+          "name": "Type",
+          "description": "Attack category."
+        },
+        "ip": {
+          "name": "IP",
+          "description": "Origin IP address."
+        },
+        "severity": {
+          "name": "Severity",
+          "description": "Defaults to the type's usual severity."
+        },
+        "source": {
+          "name": "Source",
+          "description": "Name of the system that detected it."
+        },
+        "port": {
+          "name": "Port",
+          "description": "Targeted port."
+        },
+        "username": {
+          "name": "Username",
+          "description": "Username attempted, if any."
+        },
+        "target": {
+          "name": "Target",
+          "description": "Targeted URL, service or device."
+        },
+        "details": {
+          "name": "Details",
+          "description": "Free text."
+        }
+      }
+    },
+    "purge_events": {
+      "name": "Purge events",
+      "description": "Deletes stored events.",
+      "fields": {
+        "older_than_days": {
+          "name": "Older than (days)",
+          "description": "0 deletes everything."
+        }
+      }
+    },
+    "generate_test_events": {
+      "name": "Generate test events",
+      "description": "Inserts synthetic events (documentation IP ranges) to try the dashboard. Remove them later with purge_events.",
+      "fields": {
+        "count": {
+          "name": "Count",
+          "description": "Number of events."
+        },
+        "hours": {
+          "name": "Spread over (hours)",
+          "description": "Events are spread over this many past hours."
+        }
+      }
+    }
+  }
+}
