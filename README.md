@@ -5,7 +5,7 @@ conectada — logins inválidos, força bruta, varreduras de porta, injeção SQ
 Log4Shell, scanners de vulnerabilidade e outros — e exibe tudo num **dashboard em tempo real** com
 análise por período.
 
-> Status: **v0.1.0 (MVP)**. Veja o [roadmap](docs/ROADMAP.md) para as próximas etapas.
+<img width="1723" height="953" alt="Captura de Tela 2026-11-10 às 15 49 33" src="https://github.com/user-attachments/assets/c193f771-3742-414f-bf6e-14d80e122794" />
 
 ## Funcionalidades
 
