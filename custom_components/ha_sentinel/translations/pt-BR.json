@@ -44,7 +44,7 @@
             },
             "data_description": {
               "syslog_enabled": "Permite que roteadores, firewalls, NAS e servidores encaminhem seus logs ao Home Assistant.",
-              "syslog_allowed_senders": "IPs ou CIDRs, um por linha. Vazio aceita qualquer remetente (não recomendado)."
+              "syslog_allowed_senders": "IPs ou CIDRs, um por linha. Obrigatório quando o receptor está ativo — lista vazia é recusada porque o IP de origem UDP pode ser falsificado."
             }
           },
           "detection": {
@@ -78,7 +78,8 @@
       "path_not_absolute": "Os caminhos de log devem ser absolutos.",
       "path_not_allowed": "Caminho não permitido. Adicione o diretório em homeassistant: allowlist_external_dirs.",
       "path_not_readable": "Arquivo inexistente ou sem permissão de leitura para o Home Assistant.",
-      "invalid_network": "Endereço IP ou CIDR inválido."
+      "invalid_network": "Endereço IP ou CIDR inválido.",
+      "syslog_requires_allowlist": "Ative o syslog apenas com uma allowlist explícita: informe os IPs/CIDRs dos seus equipamentos (o IP de origem UDP é falsificável)."
     }
   },
   "selector": {

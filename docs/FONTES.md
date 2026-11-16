@@ -47,6 +47,11 @@ homeassistant:
 Opções → **Receptor syslog**: ative, mantenha a porta `5514` (portas < 1024 exigem root) e preencha
 **remetentes permitidos** com o IP de cada equipamento.
 
+> ⚠️ **Obrigatório preencher os remetentes permitidos.** O IP de origem de pacotes UDP é
+> falsificável, então um receptor aberto deixaria qualquer um injetar eventos. Por isso o receptor
+> **se recusa a iniciar com a lista vazia** e as opções não deixam salvar o syslog ativo sem ela.
+> Além disso, mantenha a porta `5514/udp` **restrita à LAN** no firewall — nunca exposta à internet.
+
 | Equipamento | Como encaminhar |
 |---|---|
 | Linux (rsyslog) | `/etc/rsyslog.d/90-sentinel.conf`: `auth,authpriv.*;kern.warning @IP_DO_HA:5514` e `systemctl restart rsyslog` |

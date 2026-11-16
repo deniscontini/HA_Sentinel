@@ -178,15 +178,38 @@ async def test_syslog_source(hass: HomeAssistant) -> None:
     source = next(s for s in runtime.manager.sources if s.name == "syslog")
     line = b"<38>Nov 10 13:00:01 nas sshd[1]: Failed password for root from 203.0.113.77 port 4242 ssh2"
     source.handle_datagram(line, "10.1.2.3")
-    source.handle_datagram(line, "192.168.1.50")  # not in allowed senders
-    await asyncio.sleep(0.7)
+    source.handle_datagram(line, "192.168.1.50")  # not in allowed senders -> rejected
+    assert source.rejected == 1
+    # A2: handle_datagram only queues; parsing/ingest happens off-loop on drain.
+    await source._async_drain()
     await hass.async_block_till_done()
 
     events = await hass.async_add_executor_job(runtime.manager.store.query_events)
     assert events["total"] == 1
     assert events["events"][0]["source"] == "syslog:10.1.2.3"
     assert events["events"][0]["username"] == "root"
-    assert source.rejected == 1
+
+
+async def test_syslog_refuses_empty_allowlist(hass: HomeAssistant) -> None:
+    """A1: the receiver must not open a socket without an explicit allowlist."""
+    endpoint = AsyncMock(return_value=(MagicMock(), None))
+    with patch.object(hass.loop, "create_datagram_endpoint", endpoint):
+        await _setup(
+            hass,
+            **{
+                CONF_SYSLOG_ENABLED: True,
+                CONF_SYSLOG_HOST: "0.0.0.0",
+                CONF_SYSLOG_PORT: 5514,
+                CONF_SYSLOG_ALLOWED: "",
+            },
+        )
+    endpoint.assert_not_called()
+    runtime = hass.config_entries.async_loaded_entries(DOMAIN)[0].runtime_data
+    source = next(s for s in runtime.manager.sources if s.name == "syslog")
+    assert source._transport is None
+    assert (
+        "allowlist" in (source.last_error or "").lower() or "permitidos" in (source.last_error or "").lower()
+    )
 
 
 async def test_websocket_api(hass: HomeAssistant, hass_ws_client: Any) -> None:
@@ -230,14 +253,16 @@ async def test_options_flow_validates_paths(hass: HomeAssistant, tmp_path: Path)
     result = await hass.config_entries.options.async_init(entry.entry_id)
     assert result["type"] is FlowResultType.FORM
 
-    def _payload(paths: str, ignored: str = "") -> dict[str, Any]:
+    def _payload(
+        paths: str, ignored: str = "", *, syslog_enabled: bool = False, syslog_allowed: str = ""
+    ) -> dict[str, Any]:
         return {
             "sources": {"monitor_ha_auth": True, "log_paths": paths, "poll_interval": 5},
             "syslog": {
-                "syslog_enabled": False,
+                "syslog_enabled": syslog_enabled,
                 "syslog_host": "0.0.0.0",
                 "syslog_port": 5514,
-                "syslog_allowed_senders": "",
+                "syslog_allowed_senders": syslog_allowed,
             },
             "detection": {
                 "brute_force_threshold": 5,
@@ -257,6 +282,12 @@ async def test_options_flow_validates_paths(hass: HomeAssistant, tmp_path: Path)
 
     result = await hass.config_entries.options.async_configure(result["flow_id"], _payload("", "not-an-ip"))
     assert result["errors"] == {"detection": "invalid_network"}
+
+    # A1: enabling syslog without an allowlist is rejected.
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], _payload("", syslog_enabled=True, syslog_allowed="")
+    )
+    assert result["errors"] == {"syslog": "syslog_requires_allowlist"}
 
     log = tmp_path / "auth.log"
     log.write_text("")

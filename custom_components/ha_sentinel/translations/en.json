@@ -44,7 +44,7 @@
             },
             "data_description": {
               "syslog_enabled": "Lets routers, firewalls, NAS and servers forward their logs to Home Assistant.",
-              "syslog_allowed_senders": "IPs or CIDRs, one per line. Empty accepts any sender (not recommended)."
+              "syslog_allowed_senders": "IPs or CIDRs, one per line. Required when the receiver is enabled — an empty list is refused because UDP source addresses can be spoofed."
             }
           },
           "detection": {
@@ -78,7 +78,8 @@
       "path_not_absolute": "Log paths must be absolute.",
       "path_not_allowed": "Path not allowed. Add its directory to homeassistant: allowlist_external_dirs.",
       "path_not_readable": "File does not exist or is not readable by Home Assistant.",
-      "invalid_network": "Invalid IP address or CIDR."
+      "invalid_network": "Invalid IP address or CIDR.",
+      "syslog_requires_allowlist": "Enable syslog only with an explicit allowlist: list the IPs/CIDRs of your devices (UDP source addresses are spoofable)."
     }
   },
   "selector": {

@@ -177,9 +177,13 @@ def _validate(hass: HomeAssistant, options: dict[str, Any]) -> dict[str, str]:
         if SECTION_SOURCES in errors:
             break
     try:
-        parse_networks(options.get(CONF_SYSLOG_ALLOWED))
+        allowed = parse_networks(options.get(CONF_SYSLOG_ALLOWED))
     except ValueError:
         errors[SECTION_SYSLOG] = "invalid_network"
+    else:
+        # A1: an enabled receiver must have an explicit allowlist (UDP is spoofable).
+        if options.get(CONF_SYSLOG_ENABLED) and not allowed:
+            errors[SECTION_SYSLOG] = "syslog_requires_allowlist"
     try:
         parse_networks(options.get(CONF_IGNORED_NETWORKS))
     except ValueError:
