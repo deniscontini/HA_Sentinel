@@ -87,6 +87,21 @@ class SentinelManager:
     def under_attack_threshold(self) -> int:
         return int(self.options[CONF_UNDER_ATTACK_THRESHOLD])
 
+    def _allowed_log_paths(self, paths: list[str]) -> list[str]:
+        """Keep only paths Home Assistant is allowed to read.
+
+        The options flow already validates this, but options could be set out of
+        band (storage edit, restored backup); never open a file outside the
+        configured allowlist just because it ended up in the options.
+        """
+        allowed: list[str] = []
+        for path in paths:
+            if self.hass.config.is_allowed_path(path):
+                allowed.append(path)
+            else:
+                _LOGGER.warning("Ignoring log path outside allowlist_external_dirs: %s", path)
+        return allowed
+
     # -- lifecycle ---------------------------------------------------------
 
     async def async_start(self) -> None:
@@ -96,7 +111,7 @@ class SentinelManager:
         opts = self.options
         if opts[CONF_MONITOR_HA_AUTH]:
             self.sources.append(HomeAssistantAuthSource(self.hass, self))
-        if paths := split_lines(opts[CONF_LOG_PATHS]):
+        if paths := self._allowed_log_paths(split_lines(opts[CONF_LOG_PATHS])):
             self.sources.append(LogFileSource(self.hass, self, paths, int(opts[CONF_POLL_INTERVAL])))
         if opts[CONF_SYSLOG_ENABLED]:
             self.sources.append(

@@ -12,8 +12,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 from homeassistant import config_entries
 from homeassistant.config_entries import ConfigEntryState
-from homeassistant.core import HomeAssistant
+from homeassistant.core import Context, HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
+from homeassistant.exceptions import Unauthorized
 from homeassistant.setup import async_setup_component
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
@@ -101,6 +102,25 @@ async def test_report_event_service_updates_sensors_and_fires_event(hass: HomeAs
     assert hass.states.get("binary_sensor.ha_sentinel_under_attack").state == "on"
     assert hass.states.get("sensor.ha_sentinel_threat_level").state == "high"
     assert len(fired) == 1 and fired[0].data["ip"] == "203.0.113.5"
+
+
+async def test_services_reject_non_admin_users(hass: HomeAssistant, hass_read_only_user: Any) -> None:
+    """purge/report/generate must be denied to non-admin users (audit integrity)."""
+    await _setup(hass)
+    await hass.services.async_call(DOMAIN, "generate_test_events", {"count": 5, "hours": 1}, blocking=True)
+    context = Context(user_id=hass_read_only_user.id)
+
+    for service, data in (
+        ("report_event", {"attack_type": "xss", "ip": "203.0.113.9"}),
+        ("generate_test_events", {"count": 10}),
+        ("purge_events", {"older_than_days": 0}),
+    ):
+        with pytest.raises(Unauthorized):
+            await hass.services.async_call(DOMAIN, service, data, blocking=True, context=context)
+
+    runtime = hass.config_entries.async_loaded_entries(DOMAIN)[0].runtime_data
+    events = await hass.async_add_executor_job(runtime.manager.store.query_events)
+    assert events["total"] == 5  # nothing injected, nothing purged
 
 
 async def test_ha_failed_login_log_is_captured(hass: HomeAssistant) -> None:

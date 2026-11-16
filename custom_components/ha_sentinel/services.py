@@ -5,6 +5,7 @@ from __future__ import annotations
 import time
 
 from homeassistant.core import HomeAssistant, ServiceCall, ServiceResponse, SupportsResponse, callback
+from homeassistant.exceptions import Unauthorized
 from homeassistant.helpers import config_validation as cv
 import voluptuous as vol
 
@@ -41,11 +42,27 @@ TEST_SCHEMA = vol.Schema(
 )
 
 
+async def _assert_admin(hass: HomeAssistant, call: ServiceCall) -> None:
+    """Reject non-admin users.
+
+    These actions erase the audit trail (``purge_events``) or inject events that
+    feed automations and the attack log (``report_event``). A call made by an
+    automation/script carries no user context (``user_id`` is ``None``) and is
+    trusted; a call made by a logged-in user must come from an administrator.
+    """
+    if call.context.user_id is None:
+        return
+    user = await hass.auth.async_get_user(call.context.user_id)
+    if user is None or not user.is_admin:
+        raise Unauthorized(context=call.context, user_id=call.context.user_id)
+
+
 @callback
 def async_register_services(hass: HomeAssistant) -> None:
     """Register integration services (once, independent of config entries)."""
 
     async def report_event(call: ServiceCall) -> ServiceResponse:
+        await _assert_admin(hass, call)
         manager = get_runtime(hass).manager
         attack_type = AttackType(call.data["attack_type"])
         severity = (
@@ -66,12 +83,14 @@ def async_register_services(hass: HomeAssistant) -> None:
         return {"stored": len(stored), "ids": [e.id for e in stored]}
 
     async def purge_events(call: ServiceCall) -> ServiceResponse:
+        await _assert_admin(hass, call)
         manager = get_runtime(hass).manager
         days = call.data["older_than_days"]
         deleted = await manager.async_purge(None if days == 0 else time.time() - days * 86400)
         return {"deleted": deleted}
 
     async def generate_test_events(call: ServiceCall) -> ServiceResponse:
+        await _assert_admin(hass, call)
         manager = get_runtime(hass).manager
         created = await manager.async_generate_test_events(call.data["count"], call.data["hours"])
         return {"created": created}
